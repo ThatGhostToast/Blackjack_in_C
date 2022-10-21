@@ -6,7 +6,7 @@
  * @date
  */
 
-// TODO Fix emergency subtraction. Math gets all screwed up for some reason...
+//TODO: rng is kinda stupid I wonder if there's a fix
 
 //=-=-=-= Include Statements =-=-=-=
 #include <stdio.h>
@@ -22,7 +22,6 @@ struct card
 {
     char symbol;
     int value;
-    int emergencySubtraction;
 };
 
 //=-=-=-= Global Money Variable =-=-=-=
@@ -68,7 +67,7 @@ int main()
             case '1': // The rules.
                 counter++;
                 theRules(); // Function designed to display the rules
-                sleep(5);  // Gives the user some time to read the rules before returning to the menu
+                sleep(5);   // Gives the user some time to read the rules before returning to the menu
                 break;
             case '2': // Start Game
                 printf("\n");
@@ -192,79 +191,66 @@ struct card GenerateRandomCard()
     case 1: // Creating an ACE
         newCard.symbol = 'A';
         newCard.value = 11;
-        newCard.emergencySubtraction = 10;
         return newCard;
 
     case 2: // Creating a 2
         newCard.symbol = '2';
         newCard.value = 2;
-        newCard.emergencySubtraction = 0;
         return newCard;
 
     case 3: // Creating a 3
         newCard.symbol = '3';
         newCard.value = 3;
-        newCard.emergencySubtraction = 0;
         return newCard;
 
     case 4: // Creating a 4
         newCard.symbol = '4';
         newCard.value = 4;
-        newCard.emergencySubtraction = 0;
         return newCard;
 
     case 5: // Creating a 5
         newCard.symbol = '5';
         newCard.value = 5;
-        newCard.emergencySubtraction = 0;
         return newCard;
 
     case 6: // Creating a 6
         newCard.symbol = '6';
         newCard.value = 6;
-        newCard.emergencySubtraction = 0;
         return newCard;
 
     case 7: // Creating a 7
         newCard.symbol = '7';
         newCard.value = 7;
-        newCard.emergencySubtraction = 0;
         return newCard;
 
     case 8: // Creating an 8
         newCard.symbol = '8';
         newCard.value = 8;
-        newCard.emergencySubtraction = 0;
         return newCard;
 
     case 9: // Creating a 9
         newCard.symbol = '9';
         newCard.value = 9;
-        newCard.emergencySubtraction = 0;
         return newCard;
 
     case 10: // Creating a 10
         newCard.symbol = 'X';
         newCard.value = 10;
-        newCard.emergencySubtraction = 0;
         return newCard;
 
     case 11: // Creating a Jack
         newCard.symbol = 'J';
         newCard.value = 10;
-        newCard.emergencySubtraction = 0;
         return newCard;
 
     case 12: // Creating a Queen
         newCard.symbol = 'Q';
         newCard.value = 10;
-        newCard.emergencySubtraction = 0;
         return newCard;
 
     case 13: // Creating a King
         newCard.symbol = 'K';
         newCard.value = 10;
-        newCard.emergencySubtraction = 0;
         return newCard;
 
     default: // Default (just in case) should never throw
@@ -277,17 +263,13 @@ struct card GenerateRandomCard()
  * @brief Function used to perform an emergency subtraction if a hand goes over 21
  * @note This should only affect the game if there is an Ace in one of the hands as the ace is the only one with an emergency subtraction value
  * @param cardCheck Card being passed in to change value
- * @return struct card Returns the same card but with the adjusted value
+ * @return Returns the same card but with the adjusted value
  */
 struct card EmergencySubtraction(struct card cardCheck)
 {
-    //TODO this is discusting 
-    int value = cardCheck.value;
-    int es = cardCheck.emergencySubtraction;
-    int sub = value - es;
-    char sym = cardCheck.symbol;
-    struct card returnCard = {.symbol = sym, .value = sub, .emergencySubtraction = es};
-    return returnCard;
+    // Subtracting 10 from the value
+    cardCheck.value = cardCheck.value - 10;
+    return cardCheck;
 }
 
 /**
@@ -379,7 +361,7 @@ void PlayGame()
                 // Loops over the users hand to check every card for an ace
                 for (int x = 0; x < houseHandSize; x++)
                 {
-                    if (houseHand[x].symbol == 'A')
+                    if (houseHand[x].symbol == 'A' && houseHand[x].value == 11)
                     {
                         // Calling EmergencySubtraction() to change the aces value to a 1 instead of 11
                         houseHand[x] = EmergencySubtraction(houseHand[x]);
@@ -429,7 +411,7 @@ void PlayGame()
                 // Loops over the users hand to check every card for an ace
                 for (int x = 0; x < userHandSize; x++)
                 {
-                    if (userHand[x].symbol == 'A')
+                    if (userHand[x].symbol == 'A' && userHand[x].value == 11)
                     {
                         // Calling EmergencySubtraction() to change the aces value to a 1 instead of 11
                         userHand[x] = EmergencySubtraction(userHand[x]);
@@ -658,6 +640,7 @@ int BetMaker()
 {
     char userIn[255];   // Holds the user input
     bool check = false; // Used to loop the prompt if the user is not entering the correct information
+    bool oob = false;   // Used to loop the prompt if the user enters a bet that is outside the money range
     int bet;            // User bet thats being returned
 
     scanf("%s", userIn); // Taking in user input
@@ -683,17 +666,32 @@ int BetMaker()
         // Checking to make sure every character in the string is a digit
         if (counter == digitCounter)
         {
-            check = true;
+            bet = atoi(userIn); // Converting the string into an integer
+            // If statement checking if the user has money available
+            if (bet <= money && bet >= 0)
+            {
+                check = true;
+            }
+            else
+            {
+                oob = true;
+            }
         }
 
         // Prompting the user for input again if they did not enter correct information
-        if (check == false)
+        if (check == false && oob == false)
         {
             printf("Please enter a number.\n");
             scanf("%s", userIn);
         }
+        // Prompting the user for input again if they entered a number that is out of bounds
+        if (check == false && oob == true)
+        {
+            printf("You don't have the available money to make that bet... Money available: %d\n", money);
+            printf("Please enter a valid number.\n");
+            scanf("%s", userIn);
+        }
     }
-    bet = atoi(userIn); // Converting the string into an integer
 
     printf("Bet Entered: $%d\n", bet); // Displaying the entered bet
     return bet;                        // Returning the validated bet
