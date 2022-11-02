@@ -6,7 +6,8 @@
  * @date
  */
 
-//TODO: rng is kinda stupid I wonder if there's a fix
+//TODO: RNG is kinda stupid I wonder if there's a fix
+//TODO: Reduce code
 
 //=-=-=-= Include Statements =-=-=-=
 #include <stdio.h>
@@ -31,6 +32,9 @@ int money = 1000; // The user's money has to be stored as a global variable so t
 void theRules();
 void MenuPrompt(int counter);
 void PlayGame();
+void ColorRed();
+void ColorBlue();
+void ColorReset();
 char YNInputValidation();
 char NumInputValidation();
 int WinCheck(int userTotal, int houseTotal);
@@ -325,6 +329,9 @@ void PlayGame()
                 // Calculate the total
                 houseTotal = houseTotal + houseHand[i].value;
 
+                //Change the color to red to make the house hand more recognizable
+                ColorRed();
+
                 if (houseTotal == 21)
                 {
                     // Display the hand
@@ -382,6 +389,9 @@ void PlayGame()
                 printf(" House Score: %d\n\n", houseTotal);
             }
 
+            // Change the console color to blue to make the users hand more recognizable
+            ColorBlue();
+
             // Displaying the user hand
             for (int i = 0; i < userHandSize; i++)
             {
@@ -421,7 +431,11 @@ void PlayGame()
                 }
             }
 
+            //Print the user score
             printf(" User Score: %d\n", userTotal);
+
+            //Reset the console color
+            ColorReset();
 
             // Checking if the house got 21 right away
             if (houseHand[0].value + houseHand[1].value == 21)
@@ -732,4 +746,25 @@ void theRules()
     printf("win! If you both have the same number it's\n");
     printf("a tie. If the house pulls 21 right away they\n");
     printf("automatically win.\n");
+}
+
+/**
+ * @brief Changes the console color to red to display the house hand
+ */
+void ColorRed(){
+    printf("\033[1;31m");
+}
+
+/**
+ * @brief Change the console color to blue to display the user hand
+ */
+void ColorBlue(){
+    printf("\033[0;36m");
+}
+
+/**
+ * @brief Resets the console color
+ */
+void ColorReset(){
+    printf("\033[0m");
 }
