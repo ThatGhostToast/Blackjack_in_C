@@ -6,9 +6,6 @@
  * @date
  */
 
-//TODO: RNG is kinda stupid I wonder if there's a fix
-//TODO: Reduce code
-
 //=-=-=-= Include Statements =-=-=-=
 #include <stdio.h>
 #include <stdbool.h>
@@ -32,9 +29,8 @@ int money = 1000; // The user's money has to be stored as a global variable so t
 void theRules();
 void MenuPrompt(int counter);
 void PlayGame();
-void ColorRed();
-void ColorBlue();
-void ColorReset();
+void BetPrompt();
+void ColorChange(int color);
 char YNInputValidation();
 char NumInputValidation();
 int WinCheck(int userTotal, int houseTotal);
@@ -49,9 +45,15 @@ struct card EmergencySubtraction(struct card cardCheck);
  */
 int main()
 {
+    // srand to actually randomize the numbers generated for card creation
+    srand(time(NULL));
+
     // Declare variables
     bool menuLoop = true; // Boolean variable used to loop over the menu when the user is making a selection
     int counter = 0;      // Integer variable used to change the prompt in the menu based on if the user read the rules or not
+
+    // Clearing up the console for formatting
+    system("clear");
 
     // Welcome the user
     printf("Welcome to BlackJack!\nWould you like to continue? (y/n)\n");
@@ -62,6 +64,12 @@ int main()
         // Loop that surrounds the menu.
         while (menuLoop)
         {
+            if (counter == 0)
+            {
+                // Clearing the console to make it look better
+                system("clear");
+            }
+
             // Prompting the user with menu selections
             MenuPrompt(counter);
 
@@ -185,7 +193,6 @@ struct card GenerateRandomCard()
 {
     int lower = 1;                                    // Lowest number for the RNG
     int upper = 13;                                   // Highest number for the RNG
-    srand(time(NULL));                                // srand to actually randomize the numbers generated
     int rng = (rand() % (upper - lower + 1)) + lower; // Randomly generated number
     struct card newCard;                              // New card being returned
 
@@ -271,8 +278,11 @@ struct card GenerateRandomCard()
  */
 struct card EmergencySubtraction(struct card cardCheck)
 {
-    // Subtracting 10 from the value
-    cardCheck.value = cardCheck.value - 10;
+    if (cardCheck.symbol == 'A' && cardCheck.value == 11)
+    {
+        // Subtracting 10 from the value
+        cardCheck.value = cardCheck.value - 10;
+    }
     return cardCheck;
 }
 
@@ -301,9 +311,13 @@ void PlayGame()
         struct card *houseHand = (struct card *)malloc(houseHandSize * sizeof(struct card)); // The hand of the dealer
         struct card *userHand = (struct card *)malloc(userHandSize * sizeof(struct card));   // The hand of the user
 
+        // Clearing the console to make it look better
+        system("clear");
+
         // Prompting the user to enter a bet
-        printf("How much would you like to bet? (Current total: $%d)\n", money);
-        bet = BetMaker(); // Entering the bet
+        BetPrompt();
+        // Entering the bet
+        bet = BetMaker();
 
         // Game Loop (This is where the fun begins)
         while (winner == false)
@@ -329,8 +343,8 @@ void PlayGame()
                 // Calculate the total
                 houseTotal = houseTotal + houseHand[i].value;
 
-                //Change the color to red to make the house hand more recognizable
-                ColorRed();
+                // Change the color to red to make the house hand more recognizable
+                ColorChange(1);
 
                 if (houseTotal == 21)
                 {
@@ -341,13 +355,12 @@ void PlayGame()
                 {
                     if (turn)
                     {
-                        // Display the hand with the first card hidden if its the user's turn
-                        if (roundCounter == 0)
+                        if (roundCounter % 2 == 0)
                         {
+                            // Display the hand with the first card hidden if its the user's turn
                             printf("[ ? ]");
-                        }
-                        else
-                        {
+                        } else {
+                            // Display the hand
                             printf("[ %c ]", houseHand[i].symbol);
                         }
                     }
@@ -368,11 +381,9 @@ void PlayGame()
                 // Loops over the users hand to check every card for an ace
                 for (int x = 0; x < houseHandSize; x++)
                 {
-                    if (houseHand[x].symbol == 'A' && houseHand[x].value == 11)
-                    {
-                        // Calling EmergencySubtraction() to change the aces value to a 1 instead of 11
-                        houseHand[x] = EmergencySubtraction(houseHand[x]);
-                    }
+                    // Calling EmergencySubtraction() to change the aces value to a 1 instead of 11
+                    houseHand[x] = EmergencySubtraction(houseHand[x]);
+ 
                     // Adding to the total
                     houseTotal = houseTotal + houseHand[x].value;
                 }
@@ -390,7 +401,7 @@ void PlayGame()
             }
 
             // Change the console color to blue to make the users hand more recognizable
-            ColorBlue();
+            ColorChange(2);
 
             // Displaying the user hand
             for (int i = 0; i < userHandSize; i++)
@@ -421,21 +432,19 @@ void PlayGame()
                 // Loops over the users hand to check every card for an ace
                 for (int x = 0; x < userHandSize; x++)
                 {
-                    if (userHand[x].symbol == 'A' && userHand[x].value == 11)
-                    {
-                        // Calling EmergencySubtraction() to change the aces value to a 1 instead of 11
-                        userHand[x] = EmergencySubtraction(userHand[x]);
-                    }
+                    // Calling EmergencySubtraction() to change the aces value to a 1 instead of 11
+                    userHand[x] = EmergencySubtraction(userHand[x]);
+
                     // Adding to the total
                     userTotal = userTotal + userHand[x].value;
                 }
             }
 
-            //Print the user score
+            // Print the user score
             printf(" User Score: %d\n", userTotal);
 
-            //Reset the console color
-            ColorReset();
+            // Reset the console color
+            ColorChange(0);
 
             // Checking if the house got 21 right away
             if (houseHand[0].value + houseHand[1].value == 21)
@@ -558,6 +567,11 @@ void PlayGame()
                 {
                     winner = true;
                 }
+                else
+                {
+                    // Clearing the console to make it look better
+                    system("clear");
+                }
             }
         }
 
@@ -565,13 +579,33 @@ void PlayGame()
         switch (WinCheck(userTotal, houseTotal))
         {
         case 1: // If the user won
-            printf("Congratulations! You win!\n");
+            printf("Congratulations! You win! Profit: ");
+            // Changing the color to green
+            ColorChange(3);
+            // Displaying the profit
+            printf("$%d", bet);
+            // Reset the color
+            ColorChange(0);
+            printf("\n");
             money = money + bet;
             break;
 
         case 2: // If the house won
-            printf("The House wins! Better luck next time!\n");
+            printf("The House wins! Better luck next time! Loss: ");
+            // Changing the color to red
+            ColorChange(1);
+            // Displaying the loss
+            printf("$%d", bet);
+            // Reset the color
+            ColorChange(0);
+            printf("\n");
+
             money = money - bet;
+            // If the user doubled down and went below $0, this gets thrown to correct the error
+            if (money < 0)
+            {
+                money = 0;
+            }
             break;
 
         case 3: // If there was a tie
@@ -586,6 +620,9 @@ void PlayGame()
         // If they want to play again, reset game variables
         if (keepGoing == 'n')
         {
+            // Clearing the console to make it look better
+            system("clear");
+
             // If they don't want to continue start the menu loop again and close the game loop
             gameLoop = false;
         }
@@ -707,8 +744,32 @@ int BetMaker()
         }
     }
 
-    printf("Bet Entered: $%d\n", bet); // Displaying the entered bet
-    return bet;                        // Returning the validated bet
+    // Displaying the entered bet
+    printf("Bet Entered: ");
+    ColorChange(3); // Changing the bet color to green
+    printf("$%d\n", bet);
+    ColorChange(0); // Resetting the color
+    return bet;     // Returning the validated bet
+}
+
+/**
+ * @brief Function used to prompt the user to enter a bet
+ */
+void BetPrompt()
+{
+    // Prompting the user
+    printf("How much would you like to bet? (Current total: ");
+    if (money > 0)
+    {
+        ColorChange(3); // Changing the color to green if the user has money
+    }
+    else
+    {
+        ColorChange(1); // Changing the color to red if the user has run out of money
+    }
+    printf("$%d", money); // Displaying the user's money
+    ColorChange(0);       // Resetting the color
+    printf(")\n");        // Closing the prompt
 }
 
 /**
@@ -733,6 +794,9 @@ void MenuPrompt(int counter)
  */
 void theRules()
 {
+    // Clearing the console to make it look better
+    system("clear");
+
     printf("=-=-=-=-=-=-=-= The Rules =-=-=-=-=-=-=-=\n");
     printf("The goal of Black Jack is to get as close\n");
     printf("to 21 as possible. You start the game with\n");
@@ -749,22 +813,23 @@ void theRules()
 }
 
 /**
- * @brief Changes the console color to red to display the house hand
+ * @brief Function that changes the color of the console.
+ * @param color Variable that decides the color
  */
-void ColorRed(){
-    printf("\033[1;31m");
-}
-
-/**
- * @brief Change the console color to blue to display the user hand
- */
-void ColorBlue(){
-    printf("\033[0;36m");
-}
-
-/**
- * @brief Resets the console color
- */
-void ColorReset(){
-    printf("\033[0m");
+void ColorChange(int color)
+{
+    switch (color)
+    {
+    case 0:
+        printf("\033[0m"); // Resets the console color
+        break;
+    case 1:
+        printf("\033[1;31m"); // Changes the color to red
+        break;
+    case 2:
+        printf("\033[1;36m"); // Changes the color to blue
+        break;
+    case 3:
+        printf("\033[1;32m"); // Changes the color to green
+    }
 }
